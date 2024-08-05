@@ -1,0 +1,48 @@
+package main
+
+import (
+	"fmt"
+	"io"
+	"net/http"
+	"net/url"
+)
+
+type Proxy struct {
+	BackendAddr string
+}
+
+func (p *Proxy) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	// fmt.Println(req.RemoteAddr, " ", req.Method, " ", req.URL)
+
+	u, err := url.Parse(p.BackendAddr)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("invalid backend address: '%s'", p.BackendAddr), http.StatusBadRequest)
+		return
+	}
+	u.Path = req.URL.Path
+	req.URL = u
+
+	client := &http.Client{}
+
+	// http: Request.RequestURI can't be set in client requests.
+	// http://golang.org/src/pkg/net/http/client.go
+	req.RequestURI = ""
+
+	resp, err := client.Do(req)
+	if err != nil {
+		http.Error(w, "Server Error", http.StatusInternalServerError)
+	}
+	defer resp.Body.Close()
+
+	copyHeader(w.Header(), resp.Header)
+	w.WriteHeader(resp.StatusCode)
+	io.Copy(w, resp.Body)
+}
+
+func copyHeader(dst, src http.Header) {
+	for k, vv := range src {
+		for _, v := range vv {
+			dst.Add(k, v)
+		}
+	}
+}
