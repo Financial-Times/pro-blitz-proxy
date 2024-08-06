@@ -7,13 +7,18 @@ import (
 	"net/url"
 )
 
+type ContextCacheHeaderKey string
+
+const (
+	ContextCacheIDKey   ContextCacheHeaderKey = "id"
+	ContextCacheSkipKey ContextCacheHeaderKey = "skip"
+)
+
 type Proxy struct {
 	BackendAddr string
 }
 
 func (p *Proxy) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	// fmt.Println(req.RemoteAddr, " ", req.Method, " ", req.URL)
-
 	u, err := url.Parse(p.BackendAddr)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("invalid backend address: '%s'", p.BackendAddr), http.StatusBadRequest)
@@ -31,6 +36,7 @@ func (p *Proxy) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	resp, err := client.Do(req)
 	if err != nil {
 		http.Error(w, "Server Error", http.StatusInternalServerError)
+		return
 	}
 	defer resp.Body.Close()
 

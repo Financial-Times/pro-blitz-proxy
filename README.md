@@ -16,42 +16,18 @@ BACKEND=http://example.com:1234
 
 ```sh
 curl \
-    -H "X-Blitz-Cache-Id=uuid1" \
+    -H "X-Blitz-Cache-Id: uuid1" \
     -d '{"hello": "world"}' \
     -X POST \
     http://blitz/path/uri
 ```
 
-### Get cache if it matches hash
+### Make request without cache
 
 ```sh
 curl \
-    -H "X-Blitz-Cache-Id=uuid1" \
-    -H "X-Blitz-Cache-Hash=hash" \
-    -d '{"hello": "world"}' \
-    -X POST \
-    http://blitz/path/uri
-```
-
-### Get cache if it matches hash; invalidate older cache
-
-```sh
-curl \
-    -H "X-Blitz-Cache-Id=uuid1" \
-    -H "X-Blitz-Cache-Hash=hash" \
-    -H "X-Blitz-Cache-Bust=older" \
-    -d '{"hello": "world"}' \
-    -X POST \
-    http://blitz/path/uri
-```
-
-### Invalidate cache for specific hash
-
-```sh
-curl \
-    -H "X-Blitz-Cache-Id=uuid1" \
-    -H "X-Blitz-Cache-Hash=hash" \
-    -H "X-Blitz-Cache-Bust=yes" \
+    -H "X-Blitz-Cache-Id: uuid1" \
+    -H "Cache-Control: no-cache" \
     -d '{"hello": "world"}' \
     -X POST \
     http://blitz/path/uri
@@ -60,10 +36,5 @@ curl \
 ### Invalidate cache for key
 
 ```sh
-curl \
-    -H "X-Blitz-Cache-Id=uuid1" \
-    -H "X-Blitz-Cache-Bust=yes" \
-    -d '{"hello": "world"}' \
-    -X POST \
-    http://blitz/path/uri
+curl http://blitz/__internal/cache/bust/uuid1
 ```

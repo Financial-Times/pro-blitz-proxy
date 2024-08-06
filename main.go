@@ -3,6 +3,8 @@ package main
 import (
 	"log/slog"
 	"net/http"
+
+	"github.com/gotha/blitz-proxy/storage/file"
 )
 
 func main() {
@@ -10,8 +12,19 @@ func main() {
 
 	registerSlogDefaultLogger(conf.SystemCode, GetLogLevel())
 
+	fileCacheStore := &file.CacheStore{}
+
 	var proxy http.Handler
 	proxy = &Proxy{BackendAddr: conf.BackendAddr}
+	proxy = &CachingProxy{
+		proxy: proxy,
+		store: fileCacheStore,
+	}
+	proxy = &HeaderParsignProxy{proxy}
+	proxy = &CacheBustingProxy{
+		proxy: proxy,
+		store: fileCacheStore,
+	}
 	proxy = &LoggingProxy{proxy}
 
 	addr := conf.GetAddress()
