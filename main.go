@@ -3,27 +3,57 @@ package main
 import (
 	"log/slog"
 	"net/http"
+	"os"
 
+	"github.com/gotha/blitz-proxy/storage"
+	"github.com/gotha/blitz-proxy/storage/dynamodb"
 	"github.com/gotha/blitz-proxy/storage/file"
 )
 
+func getCacheStore(storeType StoreType) storage.IStorage {
+	var cacheStore storage.IStorage
+	switch storeType {
+	case StoreTypeFile:
+		cacheStore = &file.CacheStore{}
+	case StoreTypeDynamodb:
+		store, err := dynamodb.NewCacheStoreWithEnvConfig()
+		if err != nil {
+			slog.Error("could not create dynamodb store",
+				slog.String("err", err.Error()),
+			)
+			os.Exit(1)
+		}
+		err = store.Init()
+		if err != nil {
+			slog.Error("could not initialize dynamodb store",
+				slog.String("err", err.Error()),
+			)
+			os.Exit(1)
+		}
+		cacheStore = store
+	default:
+		slog.Error("unsupported store")
+		os.Exit(1)
+	}
+	return cacheStore
+}
+
 func main() {
 	conf := NewConfigFromEnv()
-
 	registerSlogDefaultLogger(conf.SystemCode, GetLogLevel())
 
-	fileCacheStore := &file.CacheStore{}
+	cacheStore := getCacheStore(conf.StoreType)
 
 	var proxy http.Handler
 	proxy = &Proxy{BackendAddr: conf.BackendAddr}
 	proxy = &CachingProxy{
 		proxy: proxy,
-		store: fileCacheStore,
+		store: cacheStore,
 	}
 	proxy = &HeaderParsignProxy{proxy}
 	proxy = &CacheBustingProxy{
 		proxy: proxy,
-		store: fileCacheStore,
+		store: cacheStore,
 	}
 	proxy = &LoggingProxy{proxy}
 

@@ -6,11 +6,19 @@ import (
 	"os"
 )
 
+type StoreType int
+
+const (
+	StoreTypeFile StoreType = iota
+	StoreTypeDynamodb
+)
+
 type Config struct {
 	SystemCode  string
 	Host        string
 	Port        string
 	BackendAddr string
+	StoreType   StoreType
 }
 
 func (c Config) GetAddress() string {
@@ -22,6 +30,7 @@ func NewConfigFromEnv() Config {
 		SystemCode: "blitz-proxy",
 		Host:       "127.0.0.1",
 		Port:       "3000",
+		StoreType:  StoreTypeFile,
 	}
 	if v := os.Getenv("SYSTEM_CODE"); v != "" {
 		c.SystemCode = v
@@ -34,6 +43,11 @@ func NewConfigFromEnv() Config {
 	}
 	if v := os.Getenv("BACKEND"); v != "" {
 		c.BackendAddr = v
+	}
+	if v := os.Getenv("STORE_TYPE"); v != "" {
+		if v == "DYNAMODB" {
+			c.StoreType = StoreTypeDynamodb
+		}
 	}
 	return c
 }
