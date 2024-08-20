@@ -51,6 +51,14 @@ func main() {
 		store: cacheStore,
 	}
 	proxy = &HeaderParsignProxy{proxy}
+
+	if conf.NoCacheList != nil && len(conf.NoCacheList) > 0 {
+		proxy = &NocacheProxy{
+			proxy: proxy,
+			list:  conf.NoCacheList,
+		}
+	}
+
 	proxy = &CacheBustingProxy{
 		proxy: proxy,
 		store: cacheStore,

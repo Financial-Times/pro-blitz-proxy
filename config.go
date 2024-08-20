@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"regexp"
+	"strings"
 )
 
 type StoreType int
@@ -19,6 +21,7 @@ type Config struct {
 	Port        string
 	BackendAddr string
 	StoreType   StoreType
+	NoCacheList []*regexp.Regexp
 }
 
 func (c Config) GetAddress() string {
@@ -47,6 +50,12 @@ func NewConfigFromEnv() Config {
 	if v := os.Getenv("STORE_TYPE"); v != "" {
 		if v == "DYNAMODB" {
 			c.StoreType = StoreTypeDynamodb
+		}
+	}
+	if v := os.Getenv("NO_CACHE_LIST"); v != "" {
+		list := strings.Split(v, ",")
+		for _, val := range list {
+			c.NoCacheList = append(c.NoCacheList, regexp.MustCompile(strings.TrimSpace(val)))
 		}
 	}
 	return c

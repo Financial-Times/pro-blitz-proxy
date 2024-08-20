@@ -9,6 +9,8 @@ Caching proxy with configurable storage
 PORT=4001
 # http server to proxy
 BACKEND=http://example.com:1234
+# comma separated list of paths that should not be cached
+NO_CACHE_LIST="^/health$,^/user/.*/profile$"
 ```
 
 ## Storage
