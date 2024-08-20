@@ -45,7 +45,10 @@ func main() {
 	cacheStore := getCacheStore(conf.StoreType)
 
 	var proxy http.Handler
-	proxy = &Proxy{BackendAddr: conf.BackendAddr}
+	proxy = &Proxy{
+		BackendAddr: conf.BackendAddr,
+		HTTPClient:  &http.Client{},
+	}
 	proxy = &CachingProxy{
 		proxy: proxy,
 		store: cacheStore,

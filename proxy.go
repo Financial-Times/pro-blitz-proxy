@@ -14,28 +14,31 @@ const (
 	ContextCacheSkipKey ContextCacheHeaderKey = "skip"
 )
 
+type HTTPClient interface {
+	Do(*http.Request) (*http.Response, error)
+}
+
 type Proxy struct {
 	BackendAddr string
+	HTTPClient  HTTPClient
 }
 
 func (p *Proxy) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	u, err := url.Parse(p.BackendAddr)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("invalid backend address: '%s'", p.BackendAddr), http.StatusBadRequest)
+		http.Error(w, fmt.Sprintf("invalid backend address: '%s'", p.BackendAddr), http.StatusInternalServerError)
 		return
 	}
 	u.Path = req.URL.Path
 	req.URL = u
 
-	client := &http.Client{}
-
 	// http: Request.RequestURI can't be set in client requests.
 	// http://golang.org/src/pkg/net/http/client.go
 	req.RequestURI = ""
 
-	resp, err := client.Do(req)
+	resp, err := p.HTTPClient.Do(req)
 	if err != nil {
-		http.Error(w, "Server Error", http.StatusInternalServerError)
+		http.Error(w, "Bad Request", http.StatusBadRequest)
 		return
 	}
 	defer resp.Body.Close()
