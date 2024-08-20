@@ -5,11 +5,11 @@ import (
 	"net/http"
 )
 
-type HeaderParsignProxy struct {
+type HeaderParsingProxy struct {
 	proxy http.Handler
 }
 
-func (p *HeaderParsignProxy) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+func (p *HeaderParsingProxy) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	if items := req.Header["X-Blitz-Cache-Id"]; len(items) > 0 {
 		ctx = context.WithValue(ctx, ContextCacheIDKey, items[0])
